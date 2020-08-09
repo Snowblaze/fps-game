@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.Burst;
-using Unity.Entities;
+﻿using Unity.Entities;
 using Unity.NetCode;
 using Unity.Networking.Transport;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [UpdateInWorld(UpdateInWorld.TargetWorld.Default)]
 public class Game : ComponentSystem
@@ -47,29 +40,3 @@ public class Game : ComponentSystem
         }
     }
 }
-
-[BurstCompile]
-public struct GoInGameRequest : IRpcCommand
-{
-    public void Deserialize(ref DataStreamReader reader)
-    {
-    }
-
-    public void Serialize(ref DataStreamWriter writer)
-    {
-    }
-
-    [BurstCompile]
-    private static void InvokeExecute(ref RpcExecutor.Parameters parameters)
-    {
-        RpcExecutor.ExecuteCreateRequestComponent<GoInGameRequest>(ref parameters);
-    }
-
-    static PortableFunctionPointer<RpcExecutor.ExecuteDelegate> InvokeExecuteFunctionPointer = new PortableFunctionPointer<RpcExecutor.ExecuteDelegate>(InvokeExecute);
-    public PortableFunctionPointer<RpcExecutor.ExecuteDelegate> CompileExecute()
-    {
-        return InvokeExecuteFunctionPointer;
-    }
-}
-
-public class GoInGameRequestSystem : RpcCommandRequestSystem<GoInGameRequest> { }
