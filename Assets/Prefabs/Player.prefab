@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 7901004223788385306}
   - component: {fileID: 1765754599850047067}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -110,13 +110,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DefaultClientInstantiationType: 2
   RootPath: ..\Scripts\Generated
-  SnapshotDataPath: CubeSnapshotData.cs
-  UpdateSystemPath: CubeGhostUpdateSystem.cs
-  SerializerPath: CubeGhostSerializer.cs
+  SnapshotDataPath: PlayerSnapshotData.cs
+  UpdateSystemPath: PlayerGhostUpdateSystem.cs
+  SerializerPath: PlayerGhostSerializer.cs
   Importance: 1
-  PredictingPlayerNetworkId: MovableCubeComponent.Id
+  PredictingPlayerNetworkId: MovePlayerComponent.Id
   Components:
-  - name: MovableCubeComponent
+  - name: MovePlayerComponent
     interpolatedClient: 1
     predictedClient: 1
     server: 1
@@ -182,5 +182,5 @@ MonoBehaviour:
     manualFieldList: 0
     entityIndex: 0
   prefabId: fa7aa53770c2f5449a661a3af2cc0e68
-  Name: Cube
+  Name: Player
   doNotStrip: 0

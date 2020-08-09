@@ -9,7 +9,7 @@ using Unity.Entities;
 using Unity.Transforms;
 
 [UpdateInGroup(typeof(GhostUpdateSystemGroup))]
-public class CubeGhostUpdateSystem : JobComponentSystem
+public class PlayerGhostUpdateSystem : JobComponentSystem
 {
     [BurstCompile]
     struct UpdateInterpolatedJob : IJobChunk
@@ -22,9 +22,9 @@ public class CubeGhostUpdateSystem : JobComponentSystem
         public int ThreadIndex;
 #pragma warning restore 649
 #endif
-        [ReadOnly] public ArchetypeChunkBufferType<CubeSnapshotData> ghostSnapshotDataType;
+        [ReadOnly] public ArchetypeChunkBufferType<PlayerSnapshotData> ghostSnapshotDataType;
         [ReadOnly] public ArchetypeChunkEntityType ghostEntityType;
-        public ArchetypeChunkComponentType<MovableCubeComponent> ghostMovableCubeComponentType;
+        public ArchetypeChunkComponentType<MovePlayerComponent> ghostMovePlayerComponentType;
         public ArchetypeChunkComponentType<Rotation> ghostRotationType;
         public ArchetypeChunkComponentType<Translation> ghostTranslationType;
 
@@ -38,7 +38,7 @@ public class CubeGhostUpdateSystem : JobComponentSystem
             };
             var ghostEntityArray = chunk.GetNativeArray(ghostEntityType);
             var ghostSnapshotDataArray = chunk.GetBufferAccessor(ghostSnapshotDataType);
-            var ghostMovableCubeComponentArray = chunk.GetNativeArray(ghostMovableCubeComponentType);
+            var ghostMovePlayerComponentArray = chunk.GetNativeArray(ghostMovePlayerComponentType);
             var ghostRotationArray = chunk.GetNativeArray(ghostRotationType);
             var ghostTranslationArray = chunk.GetNativeArray(ghostTranslationType);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -58,17 +58,17 @@ public class CubeGhostUpdateSystem : JobComponentSystem
                 }
 #endif
                 // If there is no data found don't apply anything (would be default state), required for prespawned ghosts
-                CubeSnapshotData snapshotData;
+                PlayerSnapshotData snapshotData;
                 if (!snapshot.GetDataAtTick(targetTick, targetTickFraction, out snapshotData))
                     return;
 
-                var ghostMovableCubeComponent = ghostMovableCubeComponentArray[entityIndex];
+                var ghostMovePlayerComponent = ghostMovePlayerComponentArray[entityIndex];
                 var ghostRotation = ghostRotationArray[entityIndex];
                 var ghostTranslation = ghostTranslationArray[entityIndex];
-                ghostMovableCubeComponent.Id = snapshotData.GetMovableCubeComponentId(deserializerState);
+                ghostMovePlayerComponent.Id = snapshotData.GetMovePlayerComponentId(deserializerState);
                 ghostRotation.Value = snapshotData.GetRotationValue(deserializerState);
                 ghostTranslation.Value = snapshotData.GetTranslationValue(deserializerState);
-                ghostMovableCubeComponentArray[entityIndex] = ghostMovableCubeComponent;
+                ghostMovePlayerComponentArray[entityIndex] = ghostMovePlayerComponent;
                 ghostRotationArray[entityIndex] = ghostRotation;
                 ghostTranslationArray[entityIndex] = ghostTranslation;
             }
@@ -86,10 +86,10 @@ public class CubeGhostUpdateSystem : JobComponentSystem
         public int ThreadIndex;
 #pragma warning restore 649
         [NativeDisableParallelForRestriction] public NativeArray<uint> minPredictedTick;
-        [ReadOnly] public ArchetypeChunkBufferType<CubeSnapshotData> ghostSnapshotDataType;
+        [ReadOnly] public ArchetypeChunkBufferType<PlayerSnapshotData> ghostSnapshotDataType;
         [ReadOnly] public ArchetypeChunkEntityType ghostEntityType;
         public ArchetypeChunkComponentType<PredictedGhostComponent> predictedGhostComponentType;
-        public ArchetypeChunkComponentType<MovableCubeComponent> ghostMovableCubeComponentType;
+        public ArchetypeChunkComponentType<MovePlayerComponent> ghostMovePlayerComponentType;
         public ArchetypeChunkComponentType<Rotation> ghostRotationType;
         public ArchetypeChunkComponentType<Translation> ghostTranslationType;
         public uint targetTick;
@@ -103,7 +103,7 @@ public class CubeGhostUpdateSystem : JobComponentSystem
             var ghostEntityArray = chunk.GetNativeArray(ghostEntityType);
             var ghostSnapshotDataArray = chunk.GetBufferAccessor(ghostSnapshotDataType);
             var predictedGhostComponentArray = chunk.GetNativeArray(predictedGhostComponentType);
-            var ghostMovableCubeComponentArray = chunk.GetNativeArray(ghostMovableCubeComponentType);
+            var ghostMovePlayerComponentArray = chunk.GetNativeArray(ghostMovePlayerComponentType);
             var ghostRotationArray = chunk.GetNativeArray(ghostRotationType);
             var ghostTranslationArray = chunk.GetNativeArray(ghostTranslationType);
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -122,7 +122,7 @@ public class CubeGhostUpdateSystem : JobComponentSystem
                         minMaxSnapshotTick[minMaxOffset + 1] = latestTick;
                 }
 #endif
-                CubeSnapshotData snapshotData;
+                PlayerSnapshotData snapshotData;
                 snapshot.GetDataAtTick(targetTick, out snapshotData);
 
                 var predictedData = predictedGhostComponentArray[entityIndex];
@@ -137,13 +137,13 @@ public class CubeGhostUpdateSystem : JobComponentSystem
                 if (lastPredictedTickInst != snapshotData.Tick)
                     continue;
 
-                var ghostMovableCubeComponent = ghostMovableCubeComponentArray[entityIndex];
+                var ghostMovePlayerComponent = ghostMovePlayerComponentArray[entityIndex];
                 var ghostRotation = ghostRotationArray[entityIndex];
                 var ghostTranslation = ghostTranslationArray[entityIndex];
-                ghostMovableCubeComponent.Id = snapshotData.GetMovableCubeComponentId(deserializerState);
+                ghostMovePlayerComponent.Id = snapshotData.GetMovePlayerComponentId(deserializerState);
                 ghostRotation.Value = snapshotData.GetRotationValue(deserializerState);
                 ghostTranslation.Value = snapshotData.GetTranslationValue(deserializerState);
-                ghostMovableCubeComponentArray[entityIndex] = ghostMovableCubeComponent;
+                ghostMovePlayerComponentArray[entityIndex] = ghostMovePlayerComponent;
                 ghostRotationArray[entityIndex] = ghostRotation;
                 ghostTranslationArray[entityIndex] = ghostTranslation;
             }
@@ -163,9 +163,9 @@ public class CubeGhostUpdateSystem : JobComponentSystem
         m_interpolatedQuery = GetEntityQuery(new EntityQueryDesc
         {
             All = new []{
-                ComponentType.ReadWrite<CubeSnapshotData>(),
+                ComponentType.ReadWrite<PlayerSnapshotData>(),
                 ComponentType.ReadOnly<GhostComponent>(),
-                ComponentType.ReadWrite<MovableCubeComponent>(),
+                ComponentType.ReadWrite<MovePlayerComponent>(),
                 ComponentType.ReadWrite<Rotation>(),
                 ComponentType.ReadWrite<Translation>(),
             },
@@ -174,15 +174,15 @@ public class CubeGhostUpdateSystem : JobComponentSystem
         m_predictedQuery = GetEntityQuery(new EntityQueryDesc
         {
             All = new []{
-                ComponentType.ReadOnly<CubeSnapshotData>(),
+                ComponentType.ReadOnly<PlayerSnapshotData>(),
                 ComponentType.ReadOnly<GhostComponent>(),
                 ComponentType.ReadOnly<PredictedGhostComponent>(),
-                ComponentType.ReadWrite<MovableCubeComponent>(),
+                ComponentType.ReadWrite<MovePlayerComponent>(),
                 ComponentType.ReadWrite<Rotation>(),
                 ComponentType.ReadWrite<Translation>(),
             }
         });
-        RequireForUpdate(GetEntityQuery(ComponentType.ReadWrite<CubeSnapshotData>(),
+        RequireForUpdate(GetEntityQuery(ComponentType.ReadWrite<PlayerSnapshotData>(),
             ComponentType.ReadOnly<GhostComponent>()));
     }
     protected override JobHandle OnUpdate(JobHandle inputDeps)
@@ -200,10 +200,10 @@ public class CubeGhostUpdateSystem : JobComponentSystem
                 minMaxSnapshotTick = ghostMinMaxSnapshotTick,
 #endif
                 minPredictedTick = m_GhostPredictionSystemGroup.OldestPredictedTick,
-                ghostSnapshotDataType = GetArchetypeChunkBufferType<CubeSnapshotData>(true),
+                ghostSnapshotDataType = GetArchetypeChunkBufferType<PlayerSnapshotData>(true),
                 ghostEntityType = GetArchetypeChunkEntityType(),
                 predictedGhostComponentType = GetArchetypeChunkComponentType<PredictedGhostComponent>(),
-                ghostMovableCubeComponentType = GetArchetypeChunkComponentType<MovableCubeComponent>(),
+                ghostMovePlayerComponentType = GetArchetypeChunkComponentType<MovePlayerComponent>(),
                 ghostRotationType = GetArchetypeChunkComponentType<Rotation>(),
                 ghostTranslationType = GetArchetypeChunkComponentType<Translation>(),
 
@@ -224,9 +224,9 @@ public class CubeGhostUpdateSystem : JobComponentSystem
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
                 minMaxSnapshotTick = ghostMinMaxSnapshotTick,
 #endif
-                ghostSnapshotDataType = GetArchetypeChunkBufferType<CubeSnapshotData>(true),
+                ghostSnapshotDataType = GetArchetypeChunkBufferType<PlayerSnapshotData>(true),
                 ghostEntityType = GetArchetypeChunkEntityType(),
-                ghostMovableCubeComponentType = GetArchetypeChunkComponentType<MovableCubeComponent>(),
+                ghostMovePlayerComponentType = GetArchetypeChunkComponentType<MovePlayerComponent>(),
                 ghostRotationType = GetArchetypeChunkComponentType<Rotation>(),
                 ghostTranslationType = GetArchetypeChunkComponentType<Translation>(),
                 targetTick = m_ClientSimulationSystemGroup.InterpolationTick,
@@ -237,20 +237,20 @@ public class CubeGhostUpdateSystem : JobComponentSystem
         return inputDeps;
     }
 }
-public partial class CubeGhostSpawnSystem : DefaultGhostSpawnSystem<CubeSnapshotData>
+public partial class PlayerGhostSpawnSystem : DefaultGhostSpawnSystem<PlayerSnapshotData>
 {
     struct SetPredictedDefault : IJobParallelFor
     {
-        [ReadOnly] public NativeArray<CubeSnapshotData> snapshots;
+        [ReadOnly] public NativeArray<PlayerSnapshotData> snapshots;
         public NativeArray<int> predictionMask;
         [ReadOnly][DeallocateOnJobCompletion] public NativeArray<NetworkIdComponent> localPlayerId;
         public void Execute(int index)
         {
-            if (localPlayerId.Length == 1 && snapshots[index].GetMovableCubeComponentId() == localPlayerId[0].Value)
+            if (localPlayerId.Length == 1 && snapshots[index].GetMovePlayerComponentId() == localPlayerId[0].Value)
                 predictionMask[index] = 1;
         }
     }
-    protected override JobHandle SetPredictedGhostDefaults(NativeArray<CubeSnapshotData> snapshots, NativeArray<int> predictionMask, JobHandle inputDeps)
+    protected override JobHandle SetPredictedGhostDefaults(NativeArray<PlayerSnapshotData> snapshots, NativeArray<int> predictionMask, JobHandle inputDeps)
     {
         JobHandle playerHandle;
         var job = new SetPredictedDefault

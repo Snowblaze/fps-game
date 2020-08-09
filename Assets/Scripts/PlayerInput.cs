@@ -10,7 +10,7 @@ using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public struct CubeInput : ICommandData<CubeInput>
+public struct PlayerInput : ICommandData<PlayerInput>
 {
     public uint Tick => tick;
     public uint tick;
@@ -35,23 +35,23 @@ public struct CubeInput : ICommandData<CubeInput>
         writer.WriteInt(vertical);
     }
 
-    public void Deserialize(uint tick, ref DataStreamReader reader, CubeInput baseline, NetworkCompressionModel compressionModel)
+    public void Deserialize(uint tick, ref DataStreamReader reader, PlayerInput baseline, NetworkCompressionModel compressionModel)
     {
         Deserialize(tick, ref reader);
     }
 
-    public void Serialize(ref DataStreamWriter writer, CubeInput baseline, NetworkCompressionModel compressionModel)
+    public void Serialize(ref DataStreamWriter writer, PlayerInput baseline, NetworkCompressionModel compressionModel)
     {
         Serialize(ref writer);
     }
 }
 
-public class NetCubeSendCommandSystem : CommandSendSystem<CubeInput> { }
+public class PlayerSendCommandSystem : CommandSendSystem<PlayerInput> { }
 
-public class NetCubeReceiveCommandSystem : CommandReceiveSystem<CubeInput> { }
+public class PlayerReceiveCommandSystem : CommandReceiveSystem<PlayerInput> { }
 
 [UpdateInGroup(typeof(ClientSimulationSystemGroup))]
-public class SampleCubeInput : ComponentSystem
+public class SamplePlayerInput : ComponentSystem
 {
     InputAction action;
 
@@ -60,7 +60,7 @@ public class SampleCubeInput : ComponentSystem
         RequireSingletonForUpdate<NetworkIdComponent>();
         RequireSingletonForUpdate<EnableFPSGameGhostReceiveSystemComponent>();
 
-        action = GameObject.FindObjectOfType<PlayerInput>().actions.actionMaps.Single(x => x.name == "Player").actions.Single(x => x.name == "Move");
+        action = GameObject.FindObjectOfType<UnityEngine.InputSystem.PlayerInput>().actions.actionMaps.Single(x => x.name == "Player").actions.Single(x => x.name == "Move");
     }
 
     protected override void OnUpdate()
@@ -69,23 +69,23 @@ public class SampleCubeInput : ComponentSystem
         if (localInput == Entity.Null)
         {
             var localPlayerId = GetSingleton<NetworkIdComponent>().Value;
-            Entities.WithNone<CubeInput>().ForEach((Entity ent, ref MovableCubeComponent cube) =>
+            Entities.WithNone<PlayerInput>().ForEach((Entity ent, ref MovePlayerComponent player) =>
             {
-                if (cube.Id == localPlayerId)
+                if (player.Id == localPlayerId)
                 {
-                    PostUpdateCommands.AddBuffer<CubeInput>(ent);
+                    PostUpdateCommands.AddBuffer<PlayerInput>(ent);
                     PostUpdateCommands.SetComponent(GetSingletonEntity<CommandTargetComponent>(), new CommandTargetComponent { targetEntity = ent });
                 }
             });
             return;
         }
-        var input = default(CubeInput);
+        var input = default(PlayerInput);
         input.tick = World.GetExistingSystem<ClientSimulationSystemGroup>().ServerTick;
 
         input.horizontal = Mathf.RoundToInt(action.ReadValue<Vector2>().x);
         input.vertical = Mathf.RoundToInt(action.ReadValue<Vector2>().y);
 
-        var inputBuffer = EntityManager.GetBuffer<CubeInput>(localInput);
+        var inputBuffer = EntityManager.GetBuffer<PlayerInput>(localInput);
         inputBuffer.AddCommandData(input);
     }
 }

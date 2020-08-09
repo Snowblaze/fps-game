@@ -14,11 +14,11 @@ public class CameraFollowSystem : JobComponentSystem
 
     protected override void OnCreate()
     {
-        localPlayer = GetEntityQuery(ComponentType.ReadOnly<LocalToWorld>(), ComponentType.ReadOnly<CubeInput>());
+        localPlayer = GetEntityQuery(ComponentType.ReadOnly<LocalToWorld>(), ComponentType.ReadOnly<PlayerInput>());
         camTransform = GetEntityQuery(ComponentType.ReadWrite<LocalToWorld>(), typeof(UnityEngine.Transform), ComponentType.ReadOnly<CameraTargetComponent>());
 
         RequireSingletonForUpdate<CameraTargetComponent>();
-        RequireSingletonForUpdate<CubeInput>();
+        RequireSingletonForUpdate<PlayerInput>();
     }
 
     [BurstCompile]

@@ -11,7 +11,7 @@ public struct FPSGameGhostSerializerCollection : IGhostSerializerCollection
     {
         var arr = new string[]
         {
-            "CubeGhostSerializer",
+            "PlayerGhostSerializer",
         };
         return arr;
     }
@@ -21,14 +21,14 @@ public struct FPSGameGhostSerializerCollection : IGhostSerializerCollection
     public static int FindGhostType<T>()
         where T : struct, ISnapshotData<T>
     {
-        if (typeof(T) == typeof(CubeSnapshotData))
+        if (typeof(T) == typeof(PlayerSnapshotData))
             return 0;
         return -1;
     }
 
     public void BeginSerialize(ComponentSystemBase system)
     {
-        m_CubeGhostSerializer.BeginSerialize(system);
+        m_PlayerGhostSerializer.BeginSerialize(system);
     }
 
     public int CalculateImportance(int serializer, ArchetypeChunk chunk)
@@ -36,7 +36,7 @@ public struct FPSGameGhostSerializerCollection : IGhostSerializerCollection
         switch (serializer)
         {
             case 0:
-                return m_CubeGhostSerializer.CalculateImportance(chunk);
+                return m_PlayerGhostSerializer.CalculateImportance(chunk);
         }
 
         throw new ArgumentException("Invalid serializer type");
@@ -47,7 +47,7 @@ public struct FPSGameGhostSerializerCollection : IGhostSerializerCollection
         switch (serializer)
         {
             case 0:
-                return m_CubeGhostSerializer.SnapshotSize;
+                return m_PlayerGhostSerializer.SnapshotSize;
         }
 
         throw new ArgumentException("Invalid serializer type");
@@ -59,13 +59,13 @@ public struct FPSGameGhostSerializerCollection : IGhostSerializerCollection
         {
             case 0:
             {
-                return GhostSendSystem<FPSGameGhostSerializerCollection>.InvokeSerialize<CubeGhostSerializer, CubeSnapshotData>(m_CubeGhostSerializer, ref dataStream, data);
+                return GhostSendSystem<FPSGameGhostSerializerCollection>.InvokeSerialize<PlayerGhostSerializer, PlayerSnapshotData>(m_PlayerGhostSerializer, ref dataStream, data);
             }
             default:
                 throw new ArgumentException("Invalid serializer type");
         }
     }
-    private CubeGhostSerializer m_CubeGhostSerializer;
+    private PlayerGhostSerializer m_PlayerGhostSerializer;
 }
 
 public struct EnableFPSGameGhostSendSystemComponent : IComponentData

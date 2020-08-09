@@ -2,10 +2,10 @@ using Unity.Networking.Transport;
 using Unity.NetCode;
 using Unity.Mathematics;
 
-public struct CubeSnapshotData : ISnapshotData<CubeSnapshotData>
+public struct PlayerSnapshotData : ISnapshotData<PlayerSnapshotData>
 {
     public uint tick;
-    private int MovableCubeComponentId;
+    private int MovePlayerComponentId;
     private int RotationValueX;
     private int RotationValueY;
     private int RotationValueZ;
@@ -16,21 +16,21 @@ public struct CubeSnapshotData : ISnapshotData<CubeSnapshotData>
     uint changeMask0;
 
     public uint Tick => tick;
-    public int GetMovableCubeComponentId(GhostDeserializerState deserializerState)
+    public int GetMovePlayerComponentId(GhostDeserializerState deserializerState)
     {
-        return (int)MovableCubeComponentId;
+        return (int)MovePlayerComponentId;
     }
-    public int GetMovableCubeComponentId()
+    public int GetMovePlayerComponentId()
     {
-        return (int)MovableCubeComponentId;
+        return (int)MovePlayerComponentId;
     }
-    public void SetMovableCubeComponentId(int val, GhostSerializerState serializerState)
+    public void SetMovePlayerComponentId(int val, GhostSerializerState serializerState)
     {
-        MovableCubeComponentId = (int)val;
+        MovePlayerComponentId = (int)val;
     }
-    public void SetMovableCubeComponentId(int val)
+    public void SetMovePlayerComponentId(int val)
     {
-        MovableCubeComponentId = (int)val;
+        MovePlayerComponentId = (int)val;
     }
     public quaternion GetRotationValue(GhostDeserializerState deserializerState)
     {
@@ -70,10 +70,10 @@ public struct CubeSnapshotData : ISnapshotData<CubeSnapshotData>
         TranslationValueZ = (int)(val.z * 100);
     }
 
-    public void PredictDelta(uint tick, ref CubeSnapshotData baseline1, ref CubeSnapshotData baseline2)
+    public void PredictDelta(uint tick, ref PlayerSnapshotData baseline1, ref PlayerSnapshotData baseline2)
     {
         var predictor = new GhostDeltaPredictor(tick, this.tick, baseline1.tick, baseline2.tick);
-        MovableCubeComponentId = predictor.PredictInt(MovableCubeComponentId, baseline1.MovableCubeComponentId, baseline2.MovableCubeComponentId);
+        MovePlayerComponentId = predictor.PredictInt(MovePlayerComponentId, baseline1.MovePlayerComponentId, baseline2.MovePlayerComponentId);
         RotationValueX = predictor.PredictInt(RotationValueX, baseline1.RotationValueX, baseline2.RotationValueX);
         RotationValueY = predictor.PredictInt(RotationValueY, baseline1.RotationValueY, baseline2.RotationValueY);
         RotationValueZ = predictor.PredictInt(RotationValueZ, baseline1.RotationValueZ, baseline2.RotationValueZ);
@@ -83,9 +83,9 @@ public struct CubeSnapshotData : ISnapshotData<CubeSnapshotData>
         TranslationValueZ = predictor.PredictInt(TranslationValueZ, baseline1.TranslationValueZ, baseline2.TranslationValueZ);
     }
 
-    public void Serialize(int networkId, ref CubeSnapshotData baseline, ref DataStreamWriter writer, NetworkCompressionModel compressionModel)
+    public void Serialize(int networkId, ref PlayerSnapshotData baseline, ref DataStreamWriter writer, NetworkCompressionModel compressionModel)
     {
-        changeMask0 = (MovableCubeComponentId != baseline.MovableCubeComponentId) ? 1u : 0;
+        changeMask0 = (MovePlayerComponentId != baseline.MovePlayerComponentId) ? 1u : 0;
         changeMask0 |= (RotationValueX != baseline.RotationValueX ||
                                            RotationValueY != baseline.RotationValueY ||
                                            RotationValueZ != baseline.RotationValueZ ||
@@ -95,7 +95,7 @@ public struct CubeSnapshotData : ISnapshotData<CubeSnapshotData>
                                            TranslationValueZ != baseline.TranslationValueZ) ? (1u<<2) : 0;
         writer.WritePackedUIntDelta(changeMask0, baseline.changeMask0, compressionModel);
         if ((changeMask0 & (1 << 0)) != 0)
-            writer.WritePackedIntDelta(MovableCubeComponentId, baseline.MovableCubeComponentId, compressionModel);
+            writer.WritePackedIntDelta(MovePlayerComponentId, baseline.MovePlayerComponentId, compressionModel);
         if ((changeMask0 & (1 << 1)) != 0)
         {
             writer.WritePackedIntDelta(RotationValueX, baseline.RotationValueX, compressionModel);
@@ -111,15 +111,15 @@ public struct CubeSnapshotData : ISnapshotData<CubeSnapshotData>
         }
     }
 
-    public void Deserialize(uint tick, ref CubeSnapshotData baseline, ref DataStreamReader reader,
+    public void Deserialize(uint tick, ref PlayerSnapshotData baseline, ref DataStreamReader reader,
         NetworkCompressionModel compressionModel)
     {
         this.tick = tick;
         changeMask0 = reader.ReadPackedUIntDelta(baseline.changeMask0, compressionModel);
         if ((changeMask0 & (1 << 0)) != 0)
-            MovableCubeComponentId = reader.ReadPackedIntDelta(baseline.MovableCubeComponentId, compressionModel);
+            MovePlayerComponentId = reader.ReadPackedIntDelta(baseline.MovePlayerComponentId, compressionModel);
         else
-            MovableCubeComponentId = baseline.MovableCubeComponentId;
+            MovePlayerComponentId = baseline.MovePlayerComponentId;
         if ((changeMask0 & (1 << 1)) != 0)
         {
             RotationValueX = reader.ReadPackedIntDelta(baseline.RotationValueX, compressionModel);
@@ -147,7 +147,7 @@ public struct CubeSnapshotData : ISnapshotData<CubeSnapshotData>
             TranslationValueZ = baseline.TranslationValueZ;
         }
     }
-    public void Interpolate(ref CubeSnapshotData target, float factor)
+    public void Interpolate(ref PlayerSnapshotData target, float factor)
     {
         SetRotationValue(math.slerp(GetRotationValue(), target.GetRotationValue(), factor));
         SetTranslationValue(math.lerp(GetTranslationValue(), target.GetTranslationValue(), factor));
