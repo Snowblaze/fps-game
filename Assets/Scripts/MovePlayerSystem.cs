@@ -1,4 +1,5 @@
 ﻿using Unity.Entities;
+using Unity.Mathematics;
 using Unity.NetCode;
 using Unity.Transforms;
 
@@ -10,20 +11,17 @@ public class MovePlayerSystem : ComponentSystem
         var group = World.GetExistingSystem<GhostPredictionSystemGroup>();
         var tick = group.PredictingTick;
         var deltaTime = Time.DeltaTime;
-        Entities.ForEach((DynamicBuffer<PlayerInput> inputBuffer, ref Translation trans, ref PredictedGhostComponent prediction) =>
+        Entities.ForEach((DynamicBuffer<PlayerInput> inputBuffer, ref LocalToWorld localToWorld, ref Translation trans, ref PredictedGhostComponent prediction) =>
         {
             if (!GhostPredictionSystemGroup.ShouldPredict(tick, prediction))
                 return;
             PlayerInput input;
             inputBuffer.GetDataAtTick(tick, out input);
-            if (input.horizontal > 0)
-                trans.Value.x += deltaTime;
-            if (input.horizontal < 0)
-                trans.Value.x -= deltaTime;
-            if (input.vertical > 0)
-                trans.Value.z += deltaTime;
-            if (input.vertical < 0)
-                trans.Value.z -= deltaTime;
+
+            float3 forward = localToWorld.Forward;
+            float3 right = localToWorld.Right;
+            trans.Value += right * deltaTime * input.horizontal;
+            trans.Value += forward * deltaTime * input.vertical;
         });
     }
 }

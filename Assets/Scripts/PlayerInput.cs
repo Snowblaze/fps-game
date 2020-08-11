@@ -17,22 +17,24 @@ public struct PlayerInput : ICommandData<PlayerInput>
     public int horizontal;
     public int vertical;
 
-    public float x;
-    public float y;
-    public float z;
-    public float w;
+    public int mouseDeltaX;
+    public int mouseDeltaY;
 
     public void Deserialize(uint tick, ref DataStreamReader reader)
     {
         this.tick = tick;
         horizontal = reader.ReadInt();
         vertical = reader.ReadInt();
+        mouseDeltaX = reader.ReadInt();
+        mouseDeltaY = reader.ReadInt();
     }
 
     public void Serialize(ref DataStreamWriter writer)
     {
         writer.WriteInt(horizontal);
         writer.WriteInt(vertical);
+        writer.WriteInt(mouseDeltaX);
+        writer.WriteInt(mouseDeltaY);
     }
 
     public void Deserialize(uint tick, ref DataStreamReader reader, PlayerInput baseline, NetworkCompressionModel compressionModel)
@@ -53,14 +55,16 @@ public class PlayerReceiveCommandSystem : CommandReceiveSystem<PlayerInput> { }
 [UpdateInGroup(typeof(ClientSimulationSystemGroup))]
 public class SamplePlayerInput : ComponentSystem
 {
-    InputAction action;
+    InputAction moveAction;
+    InputAction lookAction;
 
     protected override void OnCreate()
     {
         RequireSingletonForUpdate<NetworkIdComponent>();
         RequireSingletonForUpdate<EnableFPSGameGhostReceiveSystemComponent>();
 
-        action = GameObject.FindObjectOfType<UnityEngine.InputSystem.PlayerInput>().actions.actionMaps.Single(x => x.name == "Player").actions.Single(x => x.name == "Move");
+        moveAction = GameObject.FindObjectOfType<UnityEngine.InputSystem.PlayerInput>().actions.actionMaps.Single(x => x.name == "Player").actions.Single(x => x.name == "Move");
+        lookAction = GameObject.FindObjectOfType<UnityEngine.InputSystem.PlayerInput>().actions.actionMaps.Single(x => x.name == "Player").actions.Single(x => x.name == "Look");
     }
 
     protected override void OnUpdate()
@@ -82,8 +86,10 @@ public class SamplePlayerInput : ComponentSystem
         var input = default(PlayerInput);
         input.tick = World.GetExistingSystem<ClientSimulationSystemGroup>().ServerTick;
 
-        input.horizontal = Mathf.RoundToInt(action.ReadValue<Vector2>().x);
-        input.vertical = Mathf.RoundToInt(action.ReadValue<Vector2>().y);
+        input.horizontal = Mathf.RoundToInt(moveAction.ReadValue<Vector2>().x);
+        input.vertical = Mathf.RoundToInt(moveAction.ReadValue<Vector2>().y);
+        input.mouseDeltaX = Mathf.RoundToInt(lookAction.ReadValue<Vector2>().x);
+        input.mouseDeltaY = Mathf.RoundToInt(lookAction.ReadValue<Vector2>().y);
 
         var inputBuffer = EntityManager.GetBuffer<PlayerInput>(localInput);
         inputBuffer.AddCommandData(input);
