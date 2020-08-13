@@ -9,32 +9,37 @@ using Unity.Networking.Transport;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 
 public struct PlayerInput : ICommandData<PlayerInput>
 {
     public uint Tick => tick;
     public uint tick;
-    public int horizontal;
-    public int vertical;
+    public float horizontal;
+    public float vertical;
 
     public int mouseDeltaX;
     public int mouseDeltaY;
 
+    public int shoot;
+
     public void Deserialize(uint tick, ref DataStreamReader reader)
     {
         this.tick = tick;
-        horizontal = reader.ReadInt();
-        vertical = reader.ReadInt();
+        horizontal = reader.ReadFloat();
+        vertical = reader.ReadFloat();
         mouseDeltaX = reader.ReadInt();
         mouseDeltaY = reader.ReadInt();
+        shoot = reader.ReadInt();
     }
 
     public void Serialize(ref DataStreamWriter writer)
     {
-        writer.WriteInt(horizontal);
-        writer.WriteInt(vertical);
+        writer.WriteFloat(horizontal);
+        writer.WriteFloat(vertical);
         writer.WriteInt(mouseDeltaX);
         writer.WriteInt(mouseDeltaY);
+        writer.WriteInt(shoot);
     }
 
     public void Deserialize(uint tick, ref DataStreamReader reader, PlayerInput baseline, NetworkCompressionModel compressionModel)
@@ -57,6 +62,7 @@ public class SamplePlayerInput : ComponentSystem
 {
     InputAction moveAction;
     InputAction lookAction;
+    InputAction shootAction;
 
     protected override void OnCreate()
     {
@@ -65,6 +71,7 @@ public class SamplePlayerInput : ComponentSystem
 
         moveAction = GameObject.FindObjectOfType<UnityEngine.InputSystem.PlayerInput>().actions.actionMaps.Single(x => x.name == "Player").actions.Single(x => x.name == "Move");
         lookAction = GameObject.FindObjectOfType<UnityEngine.InputSystem.PlayerInput>().actions.actionMaps.Single(x => x.name == "Player").actions.Single(x => x.name == "Look");
+        shootAction = GameObject.FindObjectOfType<UnityEngine.InputSystem.PlayerInput>().actions.actionMaps.Single(x => x.name == "Player").actions.Single(x => x.name == "Fire");
     }
 
     protected override void OnUpdate()
@@ -86,10 +93,11 @@ public class SamplePlayerInput : ComponentSystem
         var input = default(PlayerInput);
         input.tick = World.GetExistingSystem<ClientSimulationSystemGroup>().ServerTick;
 
-        input.horizontal = Mathf.RoundToInt(moveAction.ReadValue<Vector2>().x);
-        input.vertical = Mathf.RoundToInt(moveAction.ReadValue<Vector2>().y);
+        input.horizontal = moveAction.ReadValue<Vector2>().x;
+        input.vertical = moveAction.ReadValue<Vector2>().y;
         input.mouseDeltaX = Mathf.RoundToInt(lookAction.ReadValue<Vector2>().x);
         input.mouseDeltaY = Mathf.RoundToInt(lookAction.ReadValue<Vector2>().y);
+        input.shoot = Mathf.RoundToInt(shootAction.ReadValue<float>());
 
         var inputBuffer = EntityManager.GetBuffer<PlayerInput>(localInput);
         inputBuffer.AddCommandData(input);

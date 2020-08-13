@@ -1,6 +1,8 @@
-﻿using Unity.Entities;
+﻿using TMPro;
+using Unity.Entities;
 using Unity.Mathematics;
 using Unity.NetCode;
+using Unity.Physics;
 using Unity.Transforms;
 
 [UpdateInGroup(typeof(GhostPredictionSystemGroup))]
@@ -11,7 +13,7 @@ public class MovePlayerSystem : ComponentSystem
         var group = World.GetExistingSystem<GhostPredictionSystemGroup>();
         var tick = group.PredictingTick;
         var deltaTime = Time.DeltaTime;
-        Entities.ForEach((DynamicBuffer<PlayerInput> inputBuffer, ref LocalToWorld localToWorld, ref Translation trans, ref PredictedGhostComponent prediction) =>
+        Entities.ForEach((DynamicBuffer<PlayerInput> inputBuffer, ref LocalToWorld localToWorld, ref PhysicsVelocity velocity, ref PredictedGhostComponent prediction) =>
         {
             if (!GhostPredictionSystemGroup.ShouldPredict(tick, prediction))
                 return;
@@ -20,8 +22,12 @@ public class MovePlayerSystem : ComponentSystem
 
             float3 forward = localToWorld.Forward;
             float3 right = localToWorld.Right;
-            trans.Value += right * deltaTime * input.horizontal;
-            trans.Value += forward * deltaTime * input.vertical;
+
+            float3 direction = forward * input.vertical + right * input.horizontal;
+            float3 vel = direction;
+            vel.y = velocity.Linear.y;
+
+            velocity.Linear = vel;
         });
     }
 }
